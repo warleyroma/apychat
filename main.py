@@ -42,22 +42,22 @@ async def chat_text(message: str = Form(...)):
         response = requests.post(n8n_url, json=payload)
 
 if response.status_code == 200:
-    try:
-        resposta_n8n = response.json()
-    except:
-        resposta_n8n = {"text": response.text}
-else:
-    resposta_n8n = {"error": "Erro ao se comunicar com o n8n"}
+   try:
+    response = requests.post(n8n_url, json=payload)
+    if response.status_code == 200:
+        try:
+            resposta_n8n = response.json()
+        except:
+            resposta_n8n = {"text": response.text}
+    else:
+        resposta_n8n = {"error": "Erro ao se comunicar com o n8n"}
+except Exception as e:
+    resposta_n8n = {"error": str(e)}
 
 return {
     "received_text": message,
     "response": resposta_n8n
 }
-    except Exception as e:
-        print("Erro ao enviar para o n8n:", e)
-
-    return {"received_text": message}
-
 @app.post("/chat/audio")
 async def chat_audio(file: UploadFile = File(...)):
     # Salva o arquivo de áudio temporariamente
