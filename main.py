@@ -46,7 +46,6 @@ async def chat_text(message: str = Form(...)):
 
     return {"received_text": message}
 
-# Endpoint para enviar áudio
 @app.post("/chat/audio")
 async def chat_audio(file: UploadFile = File(...)):
     # Salva o arquivo de áudio temporariamente
@@ -65,8 +64,7 @@ async def chat_audio(file: UploadFile = File(...)):
     except Exception as e:
         print("Erro ao enviar para o n8n:", e)
 
-    return {"message": "Áudio recebido com sucesso", "filename": filename}
-
+    return {"message": "Áudio recebido com sucesso", "audio_url": f"/audio/{filename}"}
 # Servir arquivos de áudio
 app.mount("/audio", StaticFiles(directory=UPLOAD_DIR), name="audio")
 
