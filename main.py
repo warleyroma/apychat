@@ -58,6 +58,20 @@ async def chat(message: str = Form(""), audio: UploadFile = None):
 
 
 @app.post("/chat")
+async def chat_endpoint(message: str = Form(...)):
+    payload = {"mensagem": message}
+    n8n_url = "https://n8n-project-hedley.onrender.com/webhook-test/apychat"
+    
+    try:
+        response = requests.post(n8n_url, json=payload)
+        print("Resposta do n8n:", response.text)
+    except Exception as e:
+        print("Erro ao enviar para o n8n:", e)
+
+    return {"received_text": message}
+
+
+@app.post("/chat")
 async def chat_endpoint(file: UploadFile = File(...)):
     # Salva temporariamente
     filename = f"audio_{uuid.uuid4().hex}.webm"
