@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-br">
 <head>
   <meta charset="UTF-8">
   <title>APYCHAT</title>
@@ -29,20 +29,32 @@
 <body>
   <h2>APYCHAT</h2>
 
+  <!-- Seleção do ambiente -->
+  <div>
+    <label for="envProduction">Ambiente Produção</label>
+    <input type="radio" id="envProduction" name="env" value="production" checked>
+    <label for="envTest">Ambiente Teste</label>
+    <input type="radio" id="envTest" name="env" value="test">
+  </div>
+
+  <!-- Formulário para enviar texto -->
   <form id="chatFormText">
     <textarea name="message" placeholder="Digite aqui..." required></textarea><br>
     <button type="submit">Enviar Texto</button>
   </form>
 
+  <!-- Formulário para enviar áudio -->
   <form id="chatFormAudio">
     <input type="file" name="file" accept="audio/*"><br>
     <button type="submit">Enviar Áudio</button>
   </form>
 
+  <!-- Botão para gravar áudio -->
   <button id="recordButton">Gravar Áudio</button>
   <audio id="player" controls style="display:none;"></audio>
 
-  <div id="chatHistory"></div> <!-- Histórico de mensagens -->
+  <!-- Histórico de mensagens -->
+  <div id="chatHistory"></div>
 
   <script>
     // Função para adicionar mensagens no histórico
@@ -60,6 +72,11 @@
     document.getElementById('chatFormText').addEventListener('submit', async (e) => {
       e.preventDefault();
       const form = new FormData(e.target);
+      
+      // Adiciona o valor de 'env' ao FormData
+      const envValue = document.querySelector('input[name="env"]:checked').value;
+      form.append("env", envValue);
+
       const userMessage = form.get("message");
 
       addMessageToHistory(userMessage, true); // Adiciona a mensagem do usuário no histórico
@@ -70,7 +87,7 @@
       });
       const data = await res.json();
       
-      // Adiciona a resposta do agente no histórico
+      // Adiciona a resposta do bot no histórico
       const botResponse = data.reply || "Desculpe, não consegui entender.";
       addMessageToHistory(botResponse, false);
     });
@@ -79,6 +96,11 @@
     document.getElementById('chatFormAudio').addEventListener('submit', async (e) => {
       e.preventDefault();
       const form = new FormData(e.target);
+
+      // Adiciona o valor de 'env' ao FormData
+      const envValue = document.querySelector('input[name="env"]:checked').value;
+      form.append("env", envValue);
+
       const res = await fetch('/chat/audio', {
         method: 'POST',
         body: form
@@ -125,6 +147,10 @@
         // Enviar para o servidor
         const formData = new FormData();
         formData.append("file", audioBlob, "gravacao.webm");
+
+        // Adiciona o valor de 'env' ao FormData
+        const envValue = document.querySelector('input[name="env"]:checked').value;
+        formData.append("env", envValue);
 
         const res = await fetch("/chat/audio", {
           method: "POST",
