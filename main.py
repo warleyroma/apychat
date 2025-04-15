@@ -36,7 +36,7 @@ async def get_audio(filename: str):
 @app.post("/chat/text")
 async def chat_text(message: str = Form(...)):
     try:
-        n8n_url = "https://n8n-project-hedley.onrender.com/webhook-test/apychat"
+        n8n_url = [ "https://n8n-project-hedley.onrender.com/webhook-test/apychat",  "https://n8n-project-hedley.onrender.com/webhook/apychat" ]
         payload = { "message": { "text": message } }
 
         response = requests.post(n8n_url, json=payload)
