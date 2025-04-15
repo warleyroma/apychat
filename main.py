@@ -43,10 +43,11 @@ async def chat_text(message: str = Form(...)):
         if response.status_code == 200:
             try:
                 resposta_n8n = response.json()
-            except:
+            except Exception:
                 resposta_n8n = {"text": response.text}
         else:
             resposta_n8n = {"error": "Erro ao se comunicar com o n8n"}
+
     except Exception as e:
         resposta_n8n = {"error": str(e)}
 
