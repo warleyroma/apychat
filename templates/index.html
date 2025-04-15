@@ -40,7 +40,7 @@
       } else if (data.text) {
         html += `<p><strong>Resposta:</strong> ${data.text}</p>`;
       } else if (data.received_text) {
-        html += `<p><strong>Texto recebido:</strong> ${data.received_text}</p>`;
+        let html = `<p><strong>Resposta do agente:</strong> ${data.reply}</p>`;
       } else {
         html += `<p><strong>Resposta inesperada:</strong> ${JSON.stringify(data)}</p>`;
       }
