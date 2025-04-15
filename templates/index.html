@@ -3,12 +3,34 @@
 <head>
   <meta charset="UTF-8">
   <title>APYCHAT</title>
+  <style>
+    #chatHistory {
+      max-height: 400px;
+      overflow-y: auto;
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-bottom: 20px;
+      background-color: #f9f9f9;
+    }
+    .message {
+      padding: 5px;
+      margin-bottom: 10px;
+    }
+    .user-message {
+      background-color: #e0f7fa;
+      border-radius: 5px;
+    }
+    .bot-message {
+      background-color: #f1f8e9;
+      border-radius: 5px;
+    }
+  </style>
 </head>
 <body>
   <h2>APYCHAT</h2>
 
   <form id="chatFormText">
-    <textarea name="message" placeholder="Digite aqui..."></textarea><br>
+    <textarea name="message" placeholder="Digite aqui..." required></textarea><br>
     <button type="submit">Enviar Texto</button>
   </form>
 
@@ -20,32 +42,37 @@
   <button id="recordButton">Gravar Áudio</button>
   <audio id="player" controls style="display:none;"></audio>
 
-  <div id="resposta"></div>
+  <div id="chatHistory"></div> <!-- Histórico de mensagens -->
 
   <script>
+    // Função para adicionar mensagens no histórico
+    function addMessageToHistory(text, isUser = false) {
+      const chatHistory = document.getElementById('chatHistory');
+      const messageDiv = document.createElement('div');
+      messageDiv.classList.add('message');
+      messageDiv.classList.add(isUser ? 'user-message' : 'bot-message');
+      messageDiv.innerText = text;
+      chatHistory.appendChild(messageDiv);
+      chatHistory.scrollTop = chatHistory.scrollHeight; // Rolagem automática para a última mensagem
+    }
+
     // Enviar Texto
     document.getElementById('chatFormText').addEventListener('submit', async (e) => {
       e.preventDefault();
       const form = new FormData(e.target);
+      const userMessage = form.get("message");
+
+      addMessageToHistory(userMessage, true); // Adiciona a mensagem do usuário no histórico
+
       const res = await fetch('/chat/text', {
         method: 'POST',
         body: form
       });
       const data = await res.json();
-      let html = '';
-
-      // Novo tratamento da resposta
-      if (Array.isArray(data)) {
-        html += `<p><strong>Resposta:</strong> ${data.map(item => item.text).join('<br>')}</p>`;
-      } else if (data.text) {
-        html += `<p><strong>Resposta:</strong> ${data.text}</p>`;
-      } else if (data.received_text) {
-        let html = `<p><strong>Resposta do agente:</strong> ${data.reply}</p>`;
-      } else {
-        html += `<p><strong>Resposta inesperada:</strong> ${JSON.stringify(data)}</p>`;
-      }
-
-      document.getElementById('resposta').innerHTML = html;
+      
+      // Adiciona a resposta do agente no histórico
+      const botResponse = data.reply || "Desculpe, não consegui entender.";
+      addMessageToHistory(botResponse, false);
     });
 
     // Enviar Áudio (upload manual)
@@ -57,15 +84,12 @@
         body: form
       });
       const data = await res.json();
-      let html = '';
-
+      
       if (data.audio_url) {
-        html = `<p><strong>Áudio recebido:</strong> <audio controls><source src="${data.audio_url}" type="audio/webm"></audio></p>`;
+        addMessageToHistory(`Áudio enviado: <audio controls><source src="${data.audio_url}" type="audio/webm"></audio>`, false);
       } else {
-        html = `<p><strong>Erro ao receber áudio.</strong></p>`;
+        addMessageToHistory("Erro ao enviar áudio.", false);
       }
-
-      document.getElementById('resposta').innerHTML = html;
     });
 
     // Gravação de Áudio
@@ -108,15 +132,11 @@
         });
 
         const data = await res.json();
-        let html = '';
-
         if (data.audio_url) {
-          html = `<p><strong>Áudio gravado enviado:</strong> <audio controls><source src="${data.audio_url}" type="audio/webm"></audio></p>`;
+          addMessageToHistory(`Áudio gravado enviado: <audio controls><source src="${data.audio_url}" type="audio/webm"></audio>`, false);
         } else {
-          html = `<p><strong>Erro ao enviar áudio gravado.</strong></p>`;
+          addMessageToHistory("Erro ao enviar áudio gravado.", false);
         }
-
-        document.getElementById("resposta").innerHTML = html;
       };
 
       mediaRecorder.start();
