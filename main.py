@@ -1,15 +1,12 @@
-from fastapi import FastAPI, UploadFile, Form, Request, File
+from fastapi import FastAPI, UploadFile, Form, File, Request
 from fastapi.responses import FileResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
-from fastapi.responses import JSONResponse
-from fastapi import FastAPI, Request
 import os
 import uuid
 import shutil
-
+import requests
 
 app = FastAPI()
 
@@ -31,44 +28,44 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 def render_chat(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
-
 @app.get("/audio/{filename}")
 async def get_audio(filename: str):
     return FileResponse(os.path.join(UPLOAD_DIR, filename), media_type="audio/mpeg")
 
-@app.get("/", response_class=HTMLResponse)
-async def get_index():
-    with open("index.html", "r", encoding="utf-8") as f:
-        return f.read()
-
-@app.post("/chat")
-async def chat(
-    message: str = Form(""),
-    audio: UploadFile = File(None)
-):
-    audio_url = None
-
-    # Salvar áudio se existir
-    if audio:
-        filename = f"{uuid.uuid4()}.webm"
-        filepath = os.path.join(UPLOAD_DIR, filename)
-        with open(filepath, "wb") as f:
-            shutil.copyfileobj(audio.file, f)
-        audio_url = f"/audio/{filename}"
-
+# Endpoint para enviar texto
+@app.post("/chat/text")
+async def chat_text(message: str = Form(...)):
     # Enviar para o n8n
     try:
         n8n_url = "https://n8n-project-hedley.onrender.com/webhook-test/apychat"
-        payload = {"mensagem": message, "audio": audio_url}
+        payload = {"mensagem": message}
         response = requests.post(n8n_url, json=payload)
         print("Resposta do n8n:", response.text)
     except Exception as e:
         print("Erro ao enviar para o n8n:", e)
 
-    return {
-        "received_text": message,
-        "received_audio": audio_url
-    }
+    return {"received_text": message}
+
+# Endpoint para enviar áudio
+@app.post("/chat/audio")
+async def chat_audio(file: UploadFile = File(...)):
+    # Salva o arquivo de áudio temporariamente
+    filename = f"audio_{uuid.uuid4().hex}.webm"
+    file_path = os.path.join(UPLOAD_DIR, filename)
+    
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    # Enviar para o n8n
+    try:
+        n8n_url = "https://n8n-project-hedley.onrender.com/webhook-test/apychat"
+        payload = {"audio": f"/audio/{filename}"}
+        response = requests.post(n8n_url, json=payload)
+        print("Resposta do n8n:", response.text)
+    except Exception as e:
+        print("Erro ao enviar para o n8n:", e)
+
+    return {"message": "Áudio recebido com sucesso", "filename": filename}
 
 # Servir arquivos de áudio
 app.mount("/audio", StaticFiles(directory=UPLOAD_DIR), name="audio")
