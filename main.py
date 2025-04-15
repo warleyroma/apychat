@@ -38,7 +38,11 @@ async def chat_text(message: str = Form(...)):
     # Enviar para o n8n
     try:
         n8n_url = "https://n8n-project-hedley.onrender.com/webhook-test/apychat"
-        payload = {"text": message}
+       payload = {
+            "message": {
+                "text": message
+            }
+        }
         response = requests.post(n8n_url, json=payload)
         print("Resposta do n8n:", response.text)
     except Exception as e:
