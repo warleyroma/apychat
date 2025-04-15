@@ -88,7 +88,7 @@
       const data = await res.json();
       
       // Adiciona a resposta do bot no histórico
-      const botResponse = data.reply || "Desculpe, não consegui entender.";
+      const botResponse = data[0]?.text || "Desculpe, não consegui entender.";
       addMessageToHistory(botResponse, false);
     });
 
