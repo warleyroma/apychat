@@ -42,46 +42,36 @@ async def get_index():
         return f.read()
 
 @app.post("/chat")
-async def chat(message: str = Form(""), audio: UploadFile = None):
+async def chat(
+    message: str = Form(""),
+    audio: UploadFile = File(None)
+):
     audio_url = None
+
+    # Salvar áudio se existir
     if audio:
-        filename = f"{uuid.uuid4()}.mp3"
-        path = os.path.join(UPLOAD_DIR, filename)
-        with open(path, "wb") as f:
-            f.write(await audio.read())
+        filename = f"{uuid.uuid4()}.webm"
+        filepath = os.path.join(UPLOAD_DIR, filename)
+        with open(filepath, "wb") as f:
+            shutil.copyfileobj(audio.file, f)
         audio_url = f"/audio/{filename}"
+
+    # Enviar para o n8n
+    try:
+        n8n_url = "https://n8n-project-hedley.onrender.com/webhook-test/apychat"
+        payload = {"mensagem": message, "audio": audio_url}
+        response = requests.post(n8n_url, json=payload)
+        print("Resposta do n8n:", response.text)
+    except Exception as e:
+        print("Erro ao enviar para o n8n:", e)
 
     return {
         "received_text": message,
         "received_audio": audio_url
     }
 
-
-@app.post("/chat")
-async def chat_endpoint(message: str = Form(...)):
-    payload = {"mensagem": message}
-    n8n_url = "https://n8n-project-hedley.onrender.com/webhook-test/apychat"
-    
-    try:
-        response = requests.post(n8n_url, json=payload)
-        print("Resposta do n8n:", response.text)
-    except Exception as e:
-        print("Erro ao enviar para o n8n:", e)
-
-    return {"received_text": message}
-
-
-@app.post("/chat")
-async def chat_endpoint(file: UploadFile = File(...)):
-    # Salva temporariamente
-    filename = f"audio_{uuid.uuid4().hex}.webm"
-    with open(filename, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-
-    return {
-        "message": "Áudio recebido com sucesso",
-        "filename": filename
-    }
+# Servir arquivos de áudio
+app.mount("/audio", StaticFiles(directory=UPLOAD_DIR), name="audio")
 
 @app.api_route("/", methods=["GET", "HEAD"], response_class=HTMLResponse)
 async def get_index():
