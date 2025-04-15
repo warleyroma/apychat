@@ -6,15 +6,19 @@
 </head>
 <body>
   <h2>APYCHAT</h2>
+
   <form id="chatFormText">
     <textarea name="message" placeholder="Digite aqui..."></textarea><br>
     <button type="submit">Enviar Texto</button>
   </form>
 
   <form id="chatFormAudio">
-    <input type="file" name="audio" accept="audio/*"><br>
+    <input type="file" name="file" accept="audio/*"><br>
     <button type="submit">Enviar Áudio</button>
   </form>
+
+  <button id="recordButton">Gravar Áudio</button>
+  <audio id="player" controls style="display:none;"></audio>
 
   <div id="resposta"></div>
 
@@ -32,7 +36,7 @@
       document.getElementById('resposta').innerHTML = html;
     });
 
-    // Enviar Áudio
+    // Enviar Áudio (upload manual)
     document.getElementById('chatFormAudio').addEventListener('submit', async (e) => {
       e.preventDefault();
       const form = new FormData(e.target);
@@ -41,7 +45,6 @@
         body: form
       });
       const data = await res.json();
-      
       if (data.audio_url) {
         let html = `<p><strong>Áudio recebido:</strong> <audio controls><source src="${data.audio_url}" type="audio/webm"></audio></p>`;
         document.getElementById('resposta').innerHTML = html;
@@ -49,6 +52,57 @@
         let html = `<p><strong>Erro ao receber áudio.</strong></p>`;
         document.getElementById('resposta').innerHTML = html;
       }
+    });
+
+    // Gravação de Áudio
+    let mediaRecorder;
+    let audioChunks = [];
+
+    const recordButton = document.getElementById("recordButton");
+    const player = document.getElementById("player");
+
+    recordButton.addEventListener("click", async () => {
+      if (mediaRecorder && mediaRecorder.state === "recording") {
+        mediaRecorder.stop();
+        recordButton.innerText = "Gravar Áudio";
+        return;
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(stream);
+
+      mediaRecorder.ondataavailable = e => {
+        audioChunks.push(e.data);
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+        audioChunks = [];
+
+        // Reproduzir áudio
+        const audioUrl = URL.createObjectURL(audioBlob);
+        player.src = audioUrl;
+        player.style.display = "block";
+
+        // Enviar para o servidor
+        const formData = new FormData();
+        formData.append("file", audioBlob, "gravacao.webm");
+
+        const res = await fetch("/chat/audio", {
+          method: "POST",
+          body: formData
+        });
+
+        const data = await res.json();
+        if (data.audio_url) {
+          document.getElementById("resposta").innerHTML = `<p><strong>Áudio gravado enviado:</strong> <audio controls><source src="${data.audio_url}" type="audio/webm"></audio></p>`;
+        } else {
+          document.getElementById("resposta").innerHTML = `<p><strong>Erro ao enviar áudio gravado.</strong></p>`;
+        }
+      };
+
+      mediaRecorder.start();
+      recordButton.innerText = "Parar Gravação";
     });
   </script>
 </body>
