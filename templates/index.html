@@ -41,8 +41,14 @@
         body: form
       });
       const data = await res.json();
-      let html = `<p><strong>Áudio recebido:</strong> ${data.filename}</p>`;
-      document.getElementById('resposta').innerHTML = html;
+      
+      if (data.audio_url) {
+        let html = `<p><strong>Áudio recebido:</strong> <audio controls><source src="${data.audio_url}" type="audio/webm"></audio></p>`;
+        document.getElementById('resposta').innerHTML = html;
+      } else {
+        let html = `<p><strong>Erro ao receber áudio.</strong></p>`;
+        document.getElementById('resposta').innerHTML = html;
+      }
     });
   </script>
 </body>
