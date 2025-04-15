@@ -7,6 +7,13 @@
 <body>
   <h2>APYCHAT</h2>
 
+  <!-- Chave de Seleção para Produção e Teste -->
+  <label for="envSelect">Escolha o ambiente:</label>
+  <select id="envSelect">
+    <option value="test">Teste</option>
+    <option value="production">Produção</option>
+  </select>
+
   <!-- Formulário de Texto -->
   <form id="chatFormText">
     <textarea name="message" placeholder="Digite aqui..."></textarea><br>
@@ -19,12 +26,7 @@
     <button type="submit">Enviar Áudio</button>
   </form>
 
-  <!-- Chave de Seleção para Produção e Teste -->
-  <label for="envSelect">Escolha o ambiente:</label>
-  <select id="envSelect">
-    <option value="test">Teste</option>
-    <option value="production">Produção</option>
-  </select>
+  
 
   <button id="recordButton">Gravar Áudio</button>
   <audio id="player" controls style="display:none;"></audio>
