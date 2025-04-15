@@ -68,7 +68,7 @@ async def chat_audio(file: UploadFile = File(...)):
 # Servir arquivos de áudio
 app.mount("/audio", StaticFiles(directory=UPLOAD_DIR), name="audio")
 
-@app.api_route("/", methods=["GET", "HEAD"], response_class=HTMLResponse)
-async def get_index():
-    with open("index.html", "r", encoding="utf-8") as f:
-        return f.read()
+#@app.api_route("/", methods=["GET", "HEAD"], response_class=HTMLResponse)
+#async def get_index():
+  #  with open("index.html", "r", encoding="utf-8") as f:
+#        return f.read()
