@@ -26,8 +26,6 @@
     <button type="submit">Enviar Áudio</button>
   </form>
 
-  
-
   <button id="recordButton">Gravar Áudio</button>
   <audio id="player" controls style="display:none;"></audio>
 
@@ -55,10 +53,12 @@
       // Obtendo a URL correta
       const n8nUrl = getN8nUrl();
 
-      const res = await fetch(n8nUrl, {
+      const res = await fetch(n8nUrl + "/chat/text", {
         method: 'POST',
-        body: JSON.stringify({ message: { text: message } }),
-        headers: { 'Content-Type': 'application/json' }
+        body: new URLSearchParams({
+          'message': message,
+          'env': document.getElementById('envSelect').value
+        })
       });
 
       const data = await res.json();
@@ -70,10 +70,16 @@
     document.getElementById('chatFormAudio').addEventListener('submit', async (e) => {
       e.preventDefault();
       const form = new FormData(e.target);
-      const res = await fetch('/chat/audio', {
+
+      // Obtendo a URL correta
+      const n8nUrl = getN8nUrl();
+
+      // Enviar para o servidor
+      const res = await fetch(n8nUrl + "/chat/audio", {
         method: 'POST',
         body: form
       });
+
       const data = await res.json();
       if (data.audio_url) {
         let html = `<p><strong>Áudio recebido:</strong> <audio controls><source src="${data.audio_url}" type="audio/webm"></audio></p>`;
@@ -121,7 +127,7 @@
         // Pegando a URL selecionada
         const n8nUrl = getN8nUrl();
 
-        const res = await fetch(n8nUrl, {
+        const res = await fetch(n8nUrl + "/chat/audio", {
           method: "POST",
           body: formData
         });
