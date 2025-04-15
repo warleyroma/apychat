@@ -1,25 +1,29 @@
 <!DOCTYPE html>
 <html>
-<head><title>Chat Espelho</title></head>
+<head>
+  <meta charset="UTF-8">
+  <title>Chat Espelho</title>
+</head>
 <body>
-  <h2>Chat Simples</h2>
+  <h2>Chat Espelho (Texto & Áudio)</h2>
   <form id="chatForm">
-    <textarea name="message" placeholder="Digite aqui"></textarea><br>
-    <input type="file" name="audio"><br>
+    <textarea name="message" placeholder="Digite aqui..."></textarea><br>
+    <input type="file" name="audio" accept="audio/*"><br>
     <button type="submit">Enviar</button>
   </form>
+
   <div id="resposta"></div>
 
   <script>
     document.getElementById('chatForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const form = new FormData(e.target);
-      const res = await fetch('https://sua-api-no-render.onrender.com/chat', {
+      const res = await fetch('/chat', {
         method: 'POST',
         body: form
       });
       const data = await res.json();
-      let html = `<p>Texto recebido: ${data.received_text}</p>`;
+      let html = `<p><strong>Texto recebido:</strong> ${data.received_text}</p>`;
       if (data.received_audio) {
         html += `<audio controls src="${data.received_audio}"></audio>`;
       }
