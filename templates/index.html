@@ -3,24 +3,37 @@
 <head>
   <meta charset="UTF-8">
   <title>APYCHAT</title>
+  <style>
+    #chatHistory {
+      max-height: 400px;
+      overflow-y: auto;
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-bottom: 20px;
+      background-color: #f9f9f9;
+    }
+    .message {
+      padding: 5px;
+      margin-bottom: 10px;
+    }
+    .user-message {
+      background-color: #e0f7fa;
+      border-radius: 5px;
+    }
+    .bot-message {
+      background-color: #f1f8e9;
+      border-radius: 5px;
+    }
+  </style>
 </head>
 <body>
   <h2>APYCHAT</h2>
 
-  <!-- Chave de Seleção para Produção e Teste -->
-  <label for="envSelect">Escolha o ambiente:</label>
-  <select id="envSelect">
-    <option value="test">Teste</option>
-    <option value="production">Produção</option>
-  </select>
-
-  <!-- Formulário de Texto -->
   <form id="chatFormText">
-    <textarea name="message" placeholder="Digite aqui..."></textarea><br>
+    <textarea name="message" placeholder="Digite aqui..." required></textarea><br>
     <button type="submit">Enviar Texto</button>
   </form>
 
-  <!-- Formulário de Áudio -->
   <form id="chatFormAudio">
     <input type="file" name="file" accept="audio/*"><br>
     <button type="submit">Enviar Áudio</button>
@@ -29,64 +42,53 @@
   <button id="recordButton">Gravar Áudio</button>
   <audio id="player" controls style="display:none;"></audio>
 
-  <div id="resposta"></div>
+  <div id="chatHistory"></div> <!-- Histórico de mensagens -->
 
   <script>
-    // Função para pegar a URL com base na seleção
-    function getN8nUrl() {
-      const envSelect = document.getElementById('envSelect');
-      const envValue = envSelect.value;
-
-      if (envValue === "production") {
-        return "https://n8n-project-hedley.onrender.com/webhook/apychat";
-      } else {
-        return "https://n8n-project-hedley.onrender.com/webhook-test/apychat";
-      }
+    // Função para adicionar mensagens no histórico
+    function addMessageToHistory(text, isUser = false) {
+      const chatHistory = document.getElementById('chatHistory');
+      const messageDiv = document.createElement('div');
+      messageDiv.classList.add('message');
+      messageDiv.classList.add(isUser ? 'user-message' : 'bot-message');
+      messageDiv.innerText = text;
+      chatHistory.appendChild(messageDiv);
+      chatHistory.scrollTop = chatHistory.scrollHeight; // Rolagem automática para a última mensagem
     }
 
     // Enviar Texto
     document.getElementById('chatFormText').addEventListener('submit', async (e) => {
       e.preventDefault();
       const form = new FormData(e.target);
-      const message = form.get("message");
+      const userMessage = form.get("message");
 
-      // Obtendo a URL correta
-      const n8nUrl = getN8nUrl();
+      addMessageToHistory(userMessage, true); // Adiciona a mensagem do usuário no histórico
 
-      const res = await fetch(n8nUrl + "/chat/text", {
+      const res = await fetch('/chat/text', {
         method: 'POST',
-        body: new URLSearchParams({
-          'message': message,
-          'env': document.getElementById('envSelect').value
-        })
+        body: form
       });
-
       const data = await res.json();
-      let html = `<p><strong>Texto recebido:</strong> ${data.received_text}</p>`;
-      document.getElementById('resposta').innerHTML = html;
+      
+      // Adiciona a resposta do agente no histórico
+      const botResponse = data.reply || "Desculpe, não consegui entender.";
+      addMessageToHistory(botResponse, false);
     });
 
     // Enviar Áudio (upload manual)
     document.getElementById('chatFormAudio').addEventListener('submit', async (e) => {
       e.preventDefault();
       const form = new FormData(e.target);
-
-      // Obtendo a URL correta
-      const n8nUrl = getN8nUrl();
-
-      // Enviar para o servidor
-      const res = await fetch(n8nUrl + "/chat/audio", {
+      const res = await fetch('/chat/audio', {
         method: 'POST',
         body: form
       });
-
       const data = await res.json();
+      
       if (data.audio_url) {
-        let html = `<p><strong>Áudio recebido:</strong> <audio controls><source src="${data.audio_url}" type="audio/webm"></audio></p>`;
-        document.getElementById('resposta').innerHTML = html;
+        addMessageToHistory(`Áudio enviado: <audio controls><source src="${data.audio_url}" type="audio/webm"></audio>`, false);
       } else {
-        let html = `<p><strong>Erro ao receber áudio.</strong></p>`;
-        document.getElementById('resposta').innerHTML = html;
+        addMessageToHistory("Erro ao enviar áudio.", false);
       }
     });
 
@@ -124,19 +126,16 @@
         const formData = new FormData();
         formData.append("file", audioBlob, "gravacao.webm");
 
-        // Pegando a URL selecionada
-        const n8nUrl = getN8nUrl();
-
-        const res = await fetch(n8nUrl + "/chat/audio", {
+        const res = await fetch("/chat/audio", {
           method: "POST",
           body: formData
         });
 
         const data = await res.json();
         if (data.audio_url) {
-          document.getElementById("resposta").innerHTML = `<p><strong>Áudio gravado enviado:</strong> <audio controls><source src="${data.audio_url}" type="audio/webm"></audio></p>`;
+          addMessageToHistory(`Áudio gravado enviado: <audio controls><source src="${data.audio_url}" type="audio/webm"></audio>`, false);
         } else {
-          document.getElementById("resposta").innerHTML = `<p><strong>Erro ao enviar áudio gravado.</strong></p>`;
+          addMessageToHistory("Erro ao enviar áudio gravado.", false);
         }
       };
 
