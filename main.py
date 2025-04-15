@@ -40,7 +40,19 @@ async def chat_text(message: str = Form(...)):
         n8n_url = "https://n8n-project-hedley.onrender.com/webhook-test/apychat"
         payload = {"message": {"text": message}}
         response = requests.post(n8n_url, json=payload)
-        print("Resposta do n8n:", response.text)
+
+if response.status_code == 200:
+    try:
+        resposta_n8n = response.json()
+    except:
+        resposta_n8n = {"text": response.text}
+else:
+    resposta_n8n = {"error": "Erro ao se comunicar com o n8n"}
+
+return {
+    "received_text": message,
+    "response": resposta_n8n
+}
     except Exception as e:
         print("Erro ao enviar para o n8n:", e)
 
