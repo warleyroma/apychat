@@ -2,19 +2,75 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Chat Espelho</title>
+  <title>APYCHAT</title>
 </head>
 <body>
-  <h2>Chat Espelho (Texto & Áudio)</h2>
+  <h2>APYCHAT</h2>
+
   <form id="chatForm">
     <textarea name="message" placeholder="Digite aqui..."></textarea><br>
-    <input type="file" name="audio" accept="audio/*"><br>
+    
+    <input type="file" name="audio" id="audioInput" accept="audio/*" style="display:none;">
+    <button type="button" id="recordBtn">🎙️ Gravar Áudio</button><br><br>
+
     <button type="submit">Enviar</button>
   </form>
+
+  <p id="status"></p>
+  <audio id="audioPreview" controls style="display: none;"></audio>
 
   <div id="resposta"></div>
 
   <script>
+    let mediaRecorder;
+    let audioChunks = [];
+    let isRecording = false;
+
+    const recordBtn = document.getElementById('recordBtn');
+    const statusText = document.getElementById('status');
+    const audioInput = document.getElementById('audioInput');
+    const audioPreview = document.getElementById('audioPreview');
+
+    recordBtn.addEventListener('click', async () => {
+      if (!isRecording) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          mediaRecorder = new MediaRecorder(stream);
+
+          mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+          mediaRecorder.onstop = () => {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            const audioFile = new File([audioBlob], 'gravacao.webm', { type: 'audio/webm' });
+
+            // Preenche o input file invisível com o áudio gravado
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(audioFile);
+            audioInput.files = dataTransfer.files;
+
+            // Mostra preview
+            const audioURL = URL.createObjectURL(audioBlob);
+            audioPreview.src = audioURL;
+            audioPreview.style.display = 'block';
+
+            statusText.textContent = "Áudio gravado e pronto para envio.";
+          };
+
+          audioChunks = [];
+          mediaRecorder.start();
+          isRecording = true;
+          recordBtn.textContent = "🛑 Parar Gravação";
+          statusText.textContent = "Gravando... clique novamente para parar.";
+        } catch (err) {
+          console.error('Erro ao acessar o microfone:', err);
+          statusText.textContent = "Erro ao acessar o microfone.";
+        }
+      } else {
+        mediaRecorder.stop();
+        isRecording = false;
+        recordBtn.textContent = "🎙️ Gravar Áudio";
+      }
+    });
+
     document.getElementById('chatForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const form = new FormData(e.target);
@@ -23,6 +79,7 @@
         body: form
       });
       const data = await res.json();
+
       let html = `<p><strong>Texto recebido:</strong> ${data.received_text}</p>`;
       if (data.received_audio) {
         html += `<audio controls src="${data.received_audio}"></audio>`;
