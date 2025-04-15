@@ -38,7 +38,7 @@ async def chat_text(message: str = Form(...)):
     # Enviar para o n8n
     try:
         n8n_url = "https://n8n-project-hedley.onrender.com/webhook-test/apychat"
-        payload = {"mensagem": message}
+        payload = {"text": message}
         response = requests.post(n8n_url, json=payload)
         print("Resposta do n8n:", response.text)
     except Exception as e:
@@ -49,7 +49,7 @@ async def chat_text(message: str = Form(...)):
 @app.post("/chat/audio")
 async def chat_audio(file: UploadFile = File(...)):
     # Salva o arquivo de áudio temporariamente
-    filename = f"audio_{uuid.uuid4().hex}.webm"
+    filename = f"voice_{uuid.uuid4().hex}.webm"
     file_path = os.path.join(UPLOAD_DIR, filename)
     
     with open(file_path, "wb") as buffer:
@@ -58,7 +58,7 @@ async def chat_audio(file: UploadFile = File(...)):
     # Enviar para o n8n
     try:
         n8n_url = "https://n8n-project-hedley.onrender.com/webhook-test/apychat"
-        payload = {"audio": f"/audio/{filename}"}
+        payload = {"voice": f"/audio/{filename}"}
         response = requests.post(n8n_url, json=payload)
         print("Resposta do n8n:", response.text)
     except Exception as e:
