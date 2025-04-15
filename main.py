@@ -1,12 +1,13 @@
-from fastapi import FastAPI, UploadFile, Form
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import FastAPI, UploadFile, Form, Request
 from fastapi.responses import FileResponse
+from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
 import os
 import uuid
 
 app = FastAPI()
 
-# Libera acesso de qualquer origem (ajuste depois se quiser)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -16,6 +17,14 @@ app.add_middleware(
 
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+# Configurar templates e arquivos estáticos
+templates = Jinja2Templates(directory="templates")
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+@app.get("/")
+def render_chat(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
 
 @app.post("/chat")
 async def chat(message: str = Form(""), audio: UploadFile = None):
