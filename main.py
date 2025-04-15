@@ -1,12 +1,15 @@
-from fastapi import FastAPI, UploadFile, Form, Request
+from fastapi import FastAPI, UploadFile, Form, Request, File
 from fastapi.responses import FileResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
+from fastapi.responses import JSONResponse
 from fastapi import FastAPI, Request
 import os
 import uuid
+import shutil
+
 
 app = FastAPI()
 
@@ -51,6 +54,19 @@ async def chat(message: str = Form(""), audio: UploadFile = None):
     return {
         "received_text": message,
         "received_audio": audio_url
+    }
+
+
+@app.post("/chat")
+async def chat_endpoint(file: UploadFile = File(...)):
+    # Salva temporariamente
+    filename = f"audio_{uuid.uuid4().hex}.webm"
+    with open(filename, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    return {
+        "message": "Áudio recebido com sucesso",
+        "filename": filename
     }
 
 @app.api_route("/", methods=["GET", "HEAD"], response_class=HTMLResponse)
