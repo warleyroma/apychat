@@ -35,29 +35,26 @@ async def get_audio(filename: str):
 # Endpoint para enviar texto
 @app.post("/chat/text")
 async def chat_text(message: str = Form(...)):
-    # Enviar para o n8n
     try:
         n8n_url = "https://n8n-project-hedley.onrender.com/webhook-test/apychat"
         payload = {"message": {"text": message}}
         response = requests.post(n8n_url, json=payload)
 
-if response.status_code == 200:
-   try:
-    response = requests.post(n8n_url, json=payload)
-    if response.status_code == 200:
-        try:
-            resposta_n8n = response.json()
-        except:
-            resposta_n8n = {"text": response.text}
-    else:
-        resposta_n8n = {"error": "Erro ao se comunicar com o n8n"}
-except Exception as e:
-    resposta_n8n = {"error": str(e)}
+        if response.status_code == 200:
+            try:
+                resposta_n8n = response.json()
+            except:
+                resposta_n8n = {"text": response.text}
+        else:
+            resposta_n8n = {"error": "Erro ao se comunicar com o n8n"}
+    except Exception as e:
+        resposta_n8n = {"error": str(e)}
 
-return {
-    "received_text": message,
-    "response": resposta_n8n
-}
+    return {
+        "received_text": message,
+        "response": resposta_n8n
+    }
+
 @app.post("/chat/audio")
 async def chat_audio(file: UploadFile = File(...)):
     # Salva o arquivo de áudio temporariamente
@@ -77,10 +74,6 @@ async def chat_audio(file: UploadFile = File(...)):
         print("Erro ao enviar para o n8n:", e)
 
     return {"message": "Áudio recebido com sucesso", "audio_url": f"/audio/{filename}"}
+
 # Servir arquivos de áudio
 app.mount("/audio", StaticFiles(directory=UPLOAD_DIR), name="audio")
-
-#@app.api_route("/", methods=["GET", "HEAD"], response_class=HTMLResponse)
-#async def get_index():
-  #  with open("index.html", "r", encoding="utf-8") as f:
-#        return f.read()
