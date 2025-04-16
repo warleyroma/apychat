@@ -7,6 +7,7 @@ import os
 import uuid
 import shutil
 import requests
+import httpx
 
 app = FastAPI()
 
@@ -36,14 +37,17 @@ async def get_audio(filename: str):
 @app.post("/chat/text")
 async def chat_text(message: str = Form(...), env: str = Form(...)):
     try:
-        # Escolher a URL de acordo com o ambiente selecionado (produção ou teste)
+        # Escolher a URL de acordo com o ambiente selecionado
         if env == "production":
             n8n_url = "https://n8n-project-hedley.onrender.com/webhook/apychat"
         else:
             n8n_url = "https://n8n-project-hedley.onrender.com/webhook-test/apychat"
 
         payload = {"message": {"text": message}}
-        response = requests.post(n8n_url, json=payload)
+
+        # Chamada assíncrona aguardando resposta real do n8n
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.post(n8n_url, json=payload)
 
         if response.status_code == 200:
             try:
@@ -51,7 +55,7 @@ async def chat_text(message: str = Form(...), env: str = Form(...)):
             except Exception:
                 resposta_n8n = {"text": response.text}
         else:
-            resposta_n8n = {"error": "Erro ao se comunicar com o n8n"}
+            resposta_n8n = {"error": f"Erro ao se comunicar com o n8n. Status: {response.status_code}"}
 
     except Exception as e:
         resposta_n8n = {"error": str(e)}
@@ -60,7 +64,7 @@ async def chat_text(message: str = Form(...), env: str = Form(...)):
         "received_text": message,
         "response": resposta_n8n
     }
-
+    
 @app.post("/chat/audio")
 async def chat_audio(file: UploadFile = File(...), env: str = Form(...)):
     # Salva o arquivo de áudio temporariamente
