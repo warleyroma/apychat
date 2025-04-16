@@ -31,7 +31,7 @@ def render_chat(request: Request):
 
 @app.get("/audio/{filename}")
 async def get_audio(filename: str):
-    return FileResponse(os.path.join(UPLOAD_DIR, filename), media_type="audio/mpeg")
+    return FileResponse(os.path.join(UPLOAD_DIR, filename), media_type="audio/ogg")
 
 # Endpoint para enviar texto
 @app.post("/chat/text")
