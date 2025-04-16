@@ -72,7 +72,7 @@ async def chat_text(message: str = Form(...), env: str = Form(...)):
 @app.post("/chat/audio")
 async def chat_audio(file: UploadFile = File(...), env: str = Form(...)):
     # Salva o arquivo de áudio temporariamente
-    filename = f"voice_{uuid.uuid4().hex}.webm"
+    filename = f"voice_{uuid.uuid4().hex}.ogg"
     file_path = os.path.join(UPLOAD_DIR, filename)
     
     with open(file_path, "wb") as buffer:
