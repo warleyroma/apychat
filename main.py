@@ -37,7 +37,6 @@ async def get_audio(filename: str):
 @app.post("/chat/text")
 async def chat_text(message: str = Form(...), env: str = Form(...)):
     try:
-        # Escolher a URL de acordo com o ambiente selecionado
         if env == "production":
             n8n_url = "https://n8n-project-hedley.onrender.com/webhook/apychat"
         else:
@@ -45,13 +44,18 @@ async def chat_text(message: str = Form(...), env: str = Form(...)):
 
         payload = {"message": {"text": message}}
 
-        # Chamada assíncrona aguardando resposta real do n8n
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.post(n8n_url, json=payload)
 
         if response.status_code == 200:
             try:
-                resposta_n8n = response.json()
+                resposta_data = response.json()
+
+                if isinstance(resposta_data, list) and len(resposta_data) > 0 and "text" in resposta_data[0]:
+                    resposta_n8n = resposta_data[0]["text"]
+                else:
+                    resposta_n8n = resposta_data
+
             except Exception:
                 resposta_n8n = {"text": response.text}
         else:
