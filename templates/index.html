@@ -175,7 +175,7 @@
     const data = await res.json();
 
     if (data.audio_url) {
-      addMessageToHistory(`<audio controls><source src="${data.audio_url}" type="audio/webm"></audio>`, false);
+      addMessageToHistory(`<audio controls><source src="${data.audio_url}" type="audio/ogg"></audio>`, false);
     } else {
       addMessageToHistory("Erro ao enviar áudio.", false);
     }
@@ -203,7 +203,7 @@
     };
 
     mediaRecorder.onstop = async () => {
-      const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+      const audioBlob = new Blob(audioChunks, { type: "audio/ogg" });
       audioChunks = [];
 
       const audioUrl = URL.createObjectURL(audioBlob);
@@ -211,7 +211,7 @@
       player.classList.remove("hidden");
 
       const formData = new FormData();
-      formData.append("file", audioBlob, "gravacao.webm");
+      formData.append("file", audioBlob, "gravacao.ogg");
 
       const envValue = document.querySelector('input[name="env"]:checked').value;
       formData.append("env", envValue);
@@ -223,7 +223,7 @@
 
       const data = await res.json();
       if (data.audio_url) {
-        addMessageToHistory(`<audio controls><source src="${data.audio_url}" type="audio/webm"></audio>`, false);
+        addMessageToHistory(`<audio controls><source src="${data.audio_url}" type="audio/ogg"></audio>`, false);
       } else {
         addMessageToHistory("Erro ao enviar áudio gravado.", false);
       }
