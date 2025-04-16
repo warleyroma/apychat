@@ -25,15 +25,20 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 templates = Jinja2Templates(directory="templates")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+# Servir arquivos de áudio
+app.mount("/audio", StaticFiles(directory=UPLOAD_DIR), name="audio")
+
 @app.get("/")
 def render_chat(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
 @app.get("/audio/{filename}")
 async def get_audio(filename: str):
-    return FileResponse(os.path.join(UPLOAD_DIR, filename), media_type="audio/ogg")
+    file_path = os.path.join(UPLOAD_DIR, filename)
+    if os.path.isfile(file_path):
+        return FileResponse(file_path, media_type="audio/ogg")
+    return {"error": "Arquivo não encontrado."}
 
-# Endpoint para enviar texto
 @app.post("/chat/text")
 async def chat_text(message: str = Form(...), env: str = Form(...)):
     try:
@@ -68,23 +73,20 @@ async def chat_text(message: str = Form(...), env: str = Form(...)):
         "received_text": message,
         "response": resposta_n8n
     }
-    
+
 @app.post("/chat/audio")
 async def chat_audio(file: UploadFile = File(...), env: str = Form(...)):
-    # Salva o arquivo de áudio temporariamente
     filename = f"voice_{uuid.uuid4().hex}.ogg"
     file_path = os.path.join(UPLOAD_DIR, filename)
-    
+
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    # Escolher a URL de acordo com o ambiente selecionado (produção ou teste)
     if env == "production":
         n8n_url = "https://n8n-project-hedley.onrender.com/webhook/apychat"
     else:
         n8n_url = "https://n8n-project-hedley.onrender.com/webhook-test/apychat"
 
-    # Enviar para o n8n
     try:
         payload = {"voice": f"/audio/{filename}"}
         response = requests.post(n8n_url, json=payload)
@@ -93,6 +95,3 @@ async def chat_audio(file: UploadFile = File(...), env: str = Form(...)):
         print("Erro ao enviar para o n8n:", e)
 
     return {"message": "Áudio recebido com sucesso", "audio_url": f"/audio/{filename}"}
-
-# Servir arquivos de áudio
-app.mount("/audio", StaticFiles(directory=UPLOAD_DIR), name="audio")
