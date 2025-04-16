@@ -158,7 +158,7 @@
 
     const res = await fetch('/chat/text', { method: 'POST', body: form });
     const data = await res.json();
-    const botResponse = data[0]?.text || "Desculpe, não consegui entender.";
+    const botResponse = data?.response?.text || (typeof data?.response === 'string' ? data.response : "Desculpe, não consegui entender.");
     addMessageToHistory(botResponse, false);
 
     e.target.reset();
