@@ -175,6 +175,7 @@
   const data = await res.json();
 
   if (data.audio_url) {
+    
     // Mostra o áudio como mensagem do usuário
     addMessageToHistory(`<audio controls><source src="${data.audio_url}" type="audio/ogg"></audio>`, true);
 
@@ -185,6 +186,8 @@
     addMessageToHistory("Erro ao enviar áudio.", false);
   }
 });
+
+  console.log("Resposta recebida:", data.response);
 
 
   // Gravação de Áudio
