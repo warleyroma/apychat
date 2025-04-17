@@ -94,6 +94,20 @@
     .hidden {
       display: none;
     }
+
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(0,94,255,.3);
+      border-radius: 50%;
+      border-top-color: #005eff;
+      animation: spin 1s ease-in-out infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
   </style>
 </head>
 <body>
@@ -127,7 +141,7 @@
       <button type="submit" title="Enviar Texto">➤</button>
     </form>
     <form id="chatFormAudio" class="w-100 d-flex gap-2">
-      <input type="file" name="file" accept="audio/*" class="form-control" />
+      <input type="file" name="file" accept="audio/*" class="form-control" required />
       <button type="submit" title="Enviar Áudio">🎧</button>
     </form>
     <button id="recordButton" class="btn btn-outline-secondary w-100">🎤 Gravar Áudio</button>
@@ -146,6 +160,19 @@
     chatHistory.scrollTop = chatHistory.scrollHeight;
   }
 
+  // Mostra indicador de carregamento
+  function showLoading(show = true) {
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    if (show && !loadingIndicator) {
+      const loading = document.createElement('div');
+      loading.id = 'loadingIndicator';
+      loading.className = 'loading';
+      document.getElementById('chatHistory').appendChild(loading);
+    } else if (!show && loadingIndicator) {
+      loadingIndicator.remove();
+    }
+  }
+
   // Enviar Texto
   document.getElementById('chatFormText').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -156,37 +183,72 @@
     const userMessage = form.get("message");
     addMessageToHistory(userMessage, true);
 
-    const res = await fetch('/chat/text', { method: 'POST', body: form });
-    const data = await res.json();
-    const botResponse = data?.response?.text || (typeof data?.response === 'string' ? data.response : "Desculpe, não consegui entender.");
-    addMessageToHistory(botResponse, false);
+    try {
+      const res = await fetch('/chat/text', { method: 'POST', body: form });
+      const data = await res.json();
+      
+      // Tratamento consistente da resposta
+      let botResponse;
+      if (data.response && typeof data.response === 'object' && !Array.isArray(data.response)) {
+        botResponse = data.response.text || JSON.stringify(data.response);
+      } else if (Array.isArray(data.response) {
+        botResponse = data.response[0]?.text || JSON.stringify(data.response[0]);
+      } else {
+        botResponse = data.response || "Desculpe, não consegui entender.";
+      }
+      
+      addMessageToHistory(botResponse, false);
+    } catch (error) {
+      addMessageToHistory("Erro ao processar sua mensagem", false);
+      console.error("Erro:", error);
+    }
 
     e.target.reset();
   });
 
   // Enviar Áudio (upload manual)
-document.getElementById('chatFormAudio').addEventListener('submit', async (e) => {
+  document.getElementById('chatFormAudio').addEventListener('submit', async (e) => {
     e.preventDefault();
     const form = new FormData(e.target);
     const envValue = document.querySelector('input[name="env"]:checked').value;
     form.append("env", envValue);
 
-    const res = await fetch('/chat/audio', { method: 'POST', body: form });
-    const data = await res.json();
+    // Mostra indicador de carregamento
+    showLoading(true);
 
-    if (data.audio_url) {
-        // Mostra o áudio como mensagem do usuário
+    try {
+      const res = await fetch('/chat/audio', { method: 'POST', body: form });
+      const data = await res.json();
+      console.log("Resposta completa do áudio:", data);
+
+      if (data.audio_url) {
+        // Mostra o áudio do usuário
         addMessageToHistory(`<audio controls><source src="${data.audio_url}" type="audio/ogg"></audio>`, true);
 
-        // Mostra a resposta do bot - agora tratando diretamente data.response
-        const botResponse = data.response || "Desculpe, não consegui entender.";
+        // Tratamento robusto da resposta do bot
+        let botResponse;
+        if (data.response && typeof data.response === 'object') {
+          if (Array.isArray(data.response)) {
+            botResponse = data.response[0]?.text || JSON.stringify(data.response[0]);
+          } else {
+            botResponse = data.response.text || JSON.stringify(data.response);
+          }
+        } else {
+          botResponse = data.response || "Desculpe, não consegui entender o áudio.";
+        }
+
         addMessageToHistory(botResponse, false);
-    } else {
-        addMessageToHistory("Erro ao enviar áudio.", false);
+      } else {
+        addMessageToHistory("Erro: não foi possível processar o áudio", false);
+      }
+    } catch (error) {
+      console.error("Erro ao enviar áudio:", error);
+      addMessageToHistory("Erro ao enviar áudio", false);
+    } finally {
+      showLoading(false);
+      e.target.reset();
     }
-});
-
-
+  });
 
   // Gravação de Áudio
   let mediaRecorder;
@@ -202,42 +264,73 @@ document.getElementById('chatFormAudio').addEventListener('submit', async (e) =>
       return;
     }
 
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    mediaRecorder = new MediaRecorder(stream);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(stream);
 
-    mediaRecorder.ondataavailable = e => {
-      audioChunks.push(e.data);
-    };
+      mediaRecorder.ondataavailable = e => {
+        audioChunks.push(e.data);
+      };
 
-    mediaRecorder.onstop = async () => {
-      const audioBlob = new Blob(audioChunks, { type: "audio/ogg" });
-      audioChunks = [];
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunks, { type: "audio/ogg" });
+        audioChunks = [];
 
-      const audioUrl = URL.createObjectURL(audioBlob);
-      player.src = audioUrl;
-      player.classList.remove("hidden");
+        const audioUrl = URL.createObjectURL(audioBlob);
+        player.src = audioUrl;
+        player.classList.remove("hidden");
 
-      const formData = new FormData();
-      formData.append("file", audioBlob, "gravacao.ogg");
+        const formData = new FormData();
+        formData.append("file", audioBlob, "gravacao.ogg");
 
-      const envValue = document.querySelector('input[name="env"]:checked').value;
-      formData.append("env", envValue);
+        const envValue = document.querySelector('input[name="env"]:checked').value;
+        formData.append("env", envValue);
 
-      const res = await fetch("/chat/audio", {
-        method: "POST",
-        body: formData
-      });
+        // Mostra indicador de carregamento
+        showLoading(true);
 
-      const data = await res.json();
-      if (data.audio_url) {
-        addMessageToHistory(`<audio controls><source src="${data.audio_url}" type="audio/ogg"></audio>`, false);
-      } else {
-        addMessageToHistory("Erro ao enviar áudio gravado.", false);
-      }
-    };
+        try {
+          const res = await fetch("/chat/audio", {
+            method: "POST",
+            body: formData
+          });
 
-    mediaRecorder.start();
-    recordButton.innerText = "⏹️ Parar Gravação";
+          const data = await res.json();
+          console.log("Resposta da gravação:", data);
+
+          if (data.audio_url) {
+            addMessageToHistory(`<audio controls><source src="${data.audio_url}" type="audio/ogg"></audio>`, true);
+            
+            // Tratamento consistente da resposta
+            let botResponse;
+            if (data.response && typeof data.response === 'object') {
+              if (Array.isArray(data.response)) {
+                botResponse = data.response[0]?.text || JSON.stringify(data.response[0]);
+              } else {
+                botResponse = data.response.text || JSON.stringify(data.response);
+              }
+            } else {
+              botResponse = data.response || "Desculpe, não consegui entender a gravação.";
+            }
+            
+            addMessageToHistory(botResponse, false);
+          } else {
+            addMessageToHistory("Erro ao processar gravação", false);
+          }
+        } catch (error) {
+          console.error("Erro ao enviar gravação:", error);
+          addMessageToHistory("Erro ao enviar gravação", false);
+        } finally {
+          showLoading(false);
+        }
+      };
+
+      mediaRecorder.start();
+      recordButton.innerText = "⏹️ Parar Gravação";
+    } catch (error) {
+      console.error("Erro ao acessar microfone:", error);
+      addMessageToHistory("Erro ao acessar microfone. Por favor, verifique as permissões.", false);
+    }
   });
 </script>
 
