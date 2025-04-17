@@ -108,6 +108,11 @@
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
+
+    .message.user audio {
+      border: none; /* Remove a borda padrão */
+      outline: none; /* Remove a borda de foco */
+    }
   </style>
 </head>
 <body>
@@ -189,15 +194,7 @@
       const res = await fetch('/chat/text', { method: 'POST', body: form });
       const data = await res.json();
 
-      // Tratamento consistente da resposta
-      let botResponse;
-      if (data.response && typeof data.response === 'object' && !Array.isArray(data.response)) {
-        botResponse = data.response.text || JSON.stringify(data.response);
-      } else if (Array.isArray(data.response)) {
-        botResponse = data.response[0]?.text || JSON.stringify(data.response[0]);
-      } else {
-        botResponse = data.response || "Desculpe, não consegui entender.";
-      }
+      let botResponse = data.response?.text || data.response || "Desculpe, não consegui entender.";
 
       addMessageToHistory(botResponse, false);
     } catch (error) {
@@ -232,19 +229,14 @@
         audioPlayer.appendChild(source);
         addMessageToHistory(audioPlayer, true);
 
-        // Tratamento robusto da resposta do bot
         let botResponse;
         if (data.response && typeof data.response === 'object') {
-          if (Array.isArray(data.response)) {
-            botResponse = data.response[0]?.text || JSON.stringify(data.response[0]);
-          } else {
-            botResponse = data.response.text || JSON.stringify(data.response);
-          }
+          botResponse = data.response.text || JSON.stringify(data.response);
         } else {
           botResponse = data.response || "Desculpe, não consegui entender o áudio.";
         }
-
         addMessageToHistory(botResponse, false);
+
       } else {
         addMessageToHistory("Erro: não foi possível processar o áudio", false);
       }
@@ -314,19 +306,14 @@
             audioPlayer.appendChild(source);
             addMessageToHistory(audioPlayer, true);
 
-            // Tratamento consistente da resposta
             let botResponse;
             if (data.response && typeof data.response === 'object') {
-              if (Array.isArray(data.response)) {
-                botResponse = data.response[0]?.text || JSON.stringify(data.response[0]);
-              } else {
-                botResponse = data.response.text || JSON.stringify(data.response);
-              }
+              botResponse = data.response.text || JSON.stringify(data.response);
             } else {
               botResponse = data.response || "Desculpe, não consegui entender a gravação.";
             }
-
             addMessageToHistory(botResponse, false);
+
           } else {
             addMessageToHistory("Erro ao processar gravação", false);
           }
