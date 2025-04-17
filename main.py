@@ -88,7 +88,6 @@ async def chat_audio(file: UploadFile = File(...), env: str = Form(...)):
         n8n_url = "https://n8n-project-hedley.onrender.com/webhook-test/apychat"
 
     try:
-        # Envia o arquivo de áudio diretamente como multipart
         with open(file_path, "rb") as audio_file:
             files = {
                 "file": (filename, audio_file, "audio/ogg")
@@ -96,10 +95,9 @@ async def chat_audio(file: UploadFile = File(...), env: str = Form(...)):
             response = requests.post(n8n_url, files=files)
             print("Resposta do n8n:", response.text)
 
-    if response.status_code == 200:
+            if response.status_code == 200:
                 try:
                     resposta_data = response.json()
-
                     if isinstance(resposta_data, list) and len(resposta_data) > 0 and "text" in resposta_data[0]:
                         resposta_n8n = resposta_data[0]["text"]
                     else:
@@ -108,13 +106,14 @@ async def chat_audio(file: UploadFile = File(...), env: str = Form(...)):
                     resposta_n8n = {"text": response.text}
             else:
                 resposta_n8n = {"error": f"Erro ao se comunicar com o n8n. Status: {response.status_code}"}
-                
+
     except Exception as e:
         print("Erro ao enviar para o n8n:", e)
         resposta_n8n = {"error": str(e)}
+
     return {
         "message": "Áudio recebido com sucesso",
-        "audio_url": f"/audio/{filename}"
+        "audio_url": f"/audio/{filename}",
         "response": resposta_n8n
     }
 
