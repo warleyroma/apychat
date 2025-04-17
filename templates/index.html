@@ -194,7 +194,20 @@
       const res = await fetch('/chat/text', { method: 'POST', body: form });
       const data = await res.json();
 
-      let botResponse = data.response?.text || data.response || "Desculpe, não consegui entender.";
+      let botResponse = "Desculpe, não entendi a resposta.";
+
+      if (typeof data.response === 'string') {
+        try {
+          const parsedResponse = JSON.parse(data.response);
+          botResponse = parsedResponse?.text || data.response;
+        } catch (e) {
+          botResponse = data.response; // Se não for um JSON válido, exibe como está
+        }
+      } else if (typeof data.response === 'object') {
+        botResponse = data.response?.text || JSON.stringify(data.response);
+      } else if (typeof data.response !== 'undefined') {
+        botResponse = data.response;
+      }
 
       addMessageToHistory(botResponse, false);
     } catch (error) {
