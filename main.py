@@ -82,39 +82,34 @@ async def chat_audio(file: UploadFile = File(...), env: str = Form(...)):
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    if env == "production":
-        n8n_url = "https://n8n-project-hedley.onrender.com/webhook/apychat"
-    else:
-        n8n_url = "https://n8n-project-hedley.onrender.com/webhook-test/apychat"
+    n8n_url = "https://n8n-project-hedley.onrender.com/webhook-test/apychat" if env != "production" else "https://n8n-project-hedley.onrender.com/webhook/apychat"
 
     try:
         with open(file_path, "rb") as audio_file:
-            files = {
-                "file": (filename, audio_file, "audio/ogg")
-            }
+            files = {"file": (filename, audio_file, "audio/ogg")}
             response = requests.post(n8n_url, files=files)
-            print("Resposta do n8n:", response.text)
-
+            
+            # Debug: Verifique a resposta bruta
+            print("Resposta bruta do n8n:", response.text)
+            
             if response.status_code == 200:
-                try:
-                    resposta_data = response.json()
-                    # Tratamento consistente com o endpoint de texto
-                    if isinstance(resposta_data, list) and len(resposta_data) > 0 and "text" in resposta_data[0]:
-                        resposta_n8n = resposta_data[0]["text"]
-                    else:
-                        resposta_n8n = resposta_data
-                except Exception:
-                    resposta_n8n = response.text
+                resposta_data = response.json()
+                print("Resposta parseada do n8n:", resposta_data)
+                
+                # Extrai o texto da resposta do n8n
+                if isinstance(resposta_data, list) and len(resposta_data) > 0:
+                    resposta_texto = resposta_data[0].get("text", str(resposta_data[0]))
+                else:
+                    resposta_texto = str(resposta_data)
             else:
-                resposta_n8n = f"Erro ao se comunicar com o n8n. Status: {response.status_code}"
+                resposta_texto = f"Erro na API: {response.status_code}"
 
     except Exception as e:
-        print("Erro ao enviar para o n8n:", e)
-        resposta_n8n = str(e)
+        resposta_texto = f"Erro no servidor: {str(e)}"
 
     return {
-        "message": "Áudio recebido com sucesso",
+        "status": "success",
         "audio_url": f"/audio/{filename}",
-        "response": resposta_n8n  # Agora é uma string direta ou o texto do n8n
+        "response": resposta_texto  # Agora garantimos que é sempre uma string
     }
 
