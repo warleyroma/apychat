@@ -165,29 +165,25 @@
   });
 
   // Enviar Áudio (upload manual)
-  document.getElementById('chatFormAudio').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const form = new FormData(e.target);
-  const envValue = document.querySelector('input[name="env"]:checked').value;
-  form.append("env", envValue);
+document.getElementById('chatFormAudio').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = new FormData(e.target);
+    const envValue = document.querySelector('input[name="env"]:checked').value;
+    form.append("env", envValue);
 
-  const res = await fetch('/chat/audio', { method: 'POST', body: form });
-  const data = await res.json();
+    const res = await fetch('/chat/audio', { method: 'POST', body: form });
+    const data = await res.json();
 
-  if (data.audio_url) {
-    
-    // Mostra o áudio como mensagem do usuário
-    addMessageToHistory(`<audio controls><source src="${data.audio_url}" type="audio/ogg"></audio>`, true);
+    if (data.audio_url) {
+        // Mostra o áudio como mensagem do usuário
+        addMessageToHistory(`<audio controls><source src="${data.audio_url}" type="audio/ogg"></audio>`, true);
 
-    // Mostra a resposta do bot
-    const botResponse = data?.response?.text || (typeof data?.response === 'string' ? data.response : "Desculpe, não consegui entender.");
-    addMessageToHistory(botResponse, false);
-  } else {
-    addMessageToHistory("Erro ao enviar áudio.", false);
-  }
-
-    console.log("Resposta recebida:", data.response);
-
+        // Mostra a resposta do bot - agora tratando diretamente data.response
+        const botResponse = data.response || "Desculpe, não consegui entender.";
+        addMessageToHistory(botResponse, false);
+    } else {
+        addMessageToHistory("Erro ao enviar áudio.", false);
+    }
 });
 
 
