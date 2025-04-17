@@ -113,7 +113,6 @@
 <body>
 
 <div class="chat-container d-flex flex-column">
-  <!-- Header -->
   <div class="chat-header">
     <div class="d-flex align-items-center gap-2">
       <img src="https://i.pravatar.cc/40" class="rounded-circle" width="40" />
@@ -125,16 +124,13 @@
     <div>🎙️💬</div>
   </div>
 
-  <!-- Environment Selector -->
   <div class="env-selection px-3 pt-2">
     <label><input type="radio" name="env" value="production" checked> Produção</label>
     <label class="ms-3"><input type="radio" name="env" value="test"> Teste</label>
   </div>
 
-  <!-- Chat Body -->
   <div class="chat-body d-flex flex-column" id="chatHistory"></div>
 
-  <!-- Chat Footer -->
   <div class="chat-footer">
     <form id="chatFormText" class="w-100 d-flex gap-2">
       <textarea class="form-control" name="message" rows="1" placeholder="Digite aqui..." required></textarea>
@@ -151,11 +147,17 @@
 
 <script>
   // Adiciona mensagens no chat
-  function addMessageToHistory(text, isUser = false) {
+  function addMessageToHistory(content, isUser = false) {
     const chatHistory = document.getElementById('chatHistory');
     const messageDiv = document.createElement('div');
     messageDiv.classList.add('message', isUser ? 'user' : 'bot');
-    messageDiv.innerHTML = text;
+
+    if (typeof content === 'string' || content instanceof HTMLElement) {
+      messageDiv.appendChild(typeof content === 'string' ? document.createTextNode(content) : content);
+    } else {
+      messageDiv.innerHTML = content; // Para outros casos, como texto formatado
+    }
+
     chatHistory.appendChild(messageDiv);
     chatHistory.scrollTop = chatHistory.scrollHeight;
   }
@@ -186,17 +188,17 @@
     try {
       const res = await fetch('/chat/text', { method: 'POST', body: form });
       const data = await res.json();
-      
+
       // Tratamento consistente da resposta
       let botResponse;
       if (data.response && typeof data.response === 'object' && !Array.isArray(data.response)) {
         botResponse = data.response.text || JSON.stringify(data.response);
-      } else if (Array.isArray(data.response) {
+      } else if (Array.isArray(data.response)) {
         botResponse = data.response[0]?.text || JSON.stringify(data.response[0]);
       } else {
         botResponse = data.response || "Desculpe, não consegui entender.";
       }
-      
+
       addMessageToHistory(botResponse, false);
     } catch (error) {
       addMessageToHistory("Erro ao processar sua mensagem", false);
@@ -222,8 +224,13 @@
       console.log("Resposta completa do áudio:", data);
 
       if (data.audio_url) {
-        // Mostra o áudio do usuário
-        addMessageToHistory(`<audio controls><source src="${data.audio_url}" type="audio/ogg"></audio>`, true);
+        const audioPlayer = document.createElement('audio');
+        audioPlayer.controls = true;
+        const source = document.createElement('source');
+        source.src = data.audio_url;
+        source.type = 'audio/ogg';
+        audioPlayer.appendChild(source);
+        addMessageToHistory(audioPlayer, true);
 
         // Tratamento robusto da resposta do bot
         let botResponse;
@@ -299,8 +306,14 @@
           console.log("Resposta da gravação:", data);
 
           if (data.audio_url) {
-            addMessageToHistory(`<audio controls><source src="${data.audio_url}" type="audio/ogg"></audio>`, true);
-            
+            const audioPlayer = document.createElement('audio');
+            audioPlayer.controls = true;
+            const source = document.createElement('source');
+            source.src = data.audio_url;
+            source.type = 'audio/ogg';
+            audioPlayer.appendChild(source);
+            addMessageToHistory(audioPlayer, true);
+
             // Tratamento consistente da resposta
             let botResponse;
             if (data.response && typeof data.response === 'object') {
@@ -312,7 +325,7 @@
             } else {
               botResponse = data.response || "Desculpe, não consegui entender a gravação.";
             }
-            
+
             addMessageToHistory(botResponse, false);
           } else {
             addMessageToHistory("Erro ao processar gravação", false);
