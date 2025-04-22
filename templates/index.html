@@ -243,8 +243,8 @@
         addMessageToHistory(audioPlayer, true);
 
         let botResponse;
-        if (data.text) {
-          botResponse = data.text;
+        if (data.response) {
+          botResponse = data.response;
         } else {
           botResponse = "Desculpe, não consegui entender o áudio.";
         }
@@ -320,8 +320,8 @@
             addMessageToHistory(audioPlayer, true);
 
           let botResponse;
-          if (data.text) {
-          botResponse = data.text;
+          if (data.response) {
+          botResponse = data.response;
           } else {
           botResponse = "Desculpe, não consegui entender o áudio.";
           }
