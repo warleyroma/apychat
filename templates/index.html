@@ -243,10 +243,10 @@
         addMessageToHistory(audioPlayer, true);
 
         let botResponse;
-        if (data.response && typeof data.response === 'object') {
-          botResponse = data.response.text || JSON.stringify(data.response);
+        if (data.text) {
+          botResponse = data.text;
         } else {
-          botResponse = data.response || "Desculpe, não consegui entender o áudio.";
+          botResponse = "Desculpe, não consegui entender o áudio.";
         }
         addMessageToHistory(botResponse, false);
 
