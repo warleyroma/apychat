@@ -97,13 +97,13 @@ async def chat_audio(file: UploadFile = File(...), env: str = Form(...)):
                 print("Resposta parseada do n8n:", resposta_data)
                 
                # Extrai o texto da resposta do n8n
-        try:
-            if isinstance(resposta_data, list) and resposta_data:
+    try:
+        if isinstance(resposta_data, list) and resposta_data:
             resposta_texto = resposta_data[0].get("text", "")
-            elif isinstance(resposta_data, dict):
-            resposta_texto = resposta_data.get("text", "")
+        elif isinstance(resposta_data, dict):
+                resposta_texto = resposta_data.get("text", "")
         else:
-        resposta_texto = str(resposta_data)
+            resposta_texto = str(resposta_data)
 
     except Exception as e:
         resposta_texto = f"Erro no servidor: {str(e)}"
