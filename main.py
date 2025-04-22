@@ -104,7 +104,6 @@ async def chat_audio(file: UploadFile = File(...), env: str = Form(...)):
                 resposta_texto = resposta_data.get("text", "")
         else:
             resposta_texto = str(resposta_data)
-
     except Exception as e:
         resposta_texto = f"Erro no servidor: {str(e)}"
 
