@@ -288,9 +288,9 @@
         const audioBlob = new Blob(audioChunks, { type: "audio/ogg" });
         audioChunks = [];
 
-        const audioUrl = URL.createObjectURL(audioBlob);
-        player.src = audioUrl;
-        player.classList.remove("hidden");
+        //const audioUrl = URL.createObjectURL(audioBlob);
+        //player.src = audioUrl;
+       // player.classList.remove("hidden");
 
         const formData = new FormData();
         formData.append("file", audioBlob, "gravacao.ogg");
