@@ -136,20 +136,37 @@
 
   <div class="chat-body d-flex flex-column" id="chatHistory"></div>
 
-  <div class="chat-footer">
-    <form id="chatFormText" class="w-100 d-flex gap-2">
-      <textarea class="form-control" name="message" rows="1" placeholder="Digite aqui..." required></textarea>
-      <button type="submit" title="Enviar Texto">➤</button>
+  <div class="chat-footer bg-white border-top pt-2">
+  <div class="d-flex align-items-center gap-2">
+    <!-- Input de texto -->
+    <form id="chatFormText" class="flex-grow-1 d-flex align-items-center gap-2">
+      <input 
+        type="text" 
+        name="message" 
+        class="form-control border-0 bg-light rounded-pill px-3" 
+        placeholder="Digite uma mensagem..." 
+        required 
+      />
+      <button type="submit" class="btn btn-link text-primary fs-4" title="Enviar Texto">➤</button>
     </form>
-    <form id="chatFormAudio" class="w-100 d-flex gap-2">
-      <input type="file" name="file" accept="audio/*" class="form-control" required />
-      <button type="submit" title="Enviar Áudio">🎧</button>
+
+    <!-- Botão: Enviar áudio (upload) -->
+    <form id="chatFormAudio" class="d-flex align-items-center">
+      <label class="btn btn-link text-dark fs-4 m-0" title="Enviar Áudio">
+        📎
+        <input type="file" name="file" accept="audio/*" class="d-none" required />
+      </label>
     </form>
-    <form id="chatFormSendAudio" class="w-100 d-flex gap-2">
-      <button id="recordButton" class="btn d-flex w-100">🎤 Gravar Áudio</button>
+
+    <!-- Botão: Gravar áudio -->
+    <form id="chatFormSendAudio" class="d-flex align-items-center">
+      <button id="recordButton" class="btn btn-link text-dark fs-4" title="Gravar Áudio">🎤</button>
     </form>
-    <audio id="player" controls class="w-100 mt-2 hidden"></audio>
   </div>
+
+  <!-- Player de áudio (oculto por padrão) -->
+  <audio id="player" controls class="w-100 mt-2 hidden"></audio>
+</div>
 </div>
 
 <script>
@@ -349,7 +366,15 @@
       addMessageToHistory("Erro ao acessar microfone. Por favor, verifique as permissões.", false);
     }
   });
+
+
+ 
 </script>
 
 </body>
+
+
+  
 </html>
+
+
