@@ -180,6 +180,7 @@
 
     const userMessage = form.get("message");
     addMessageToHistory(userMessage, true);
+    e.target.reset();
 
     try {
       const res = await fetch('/chat/text', { method: 'POST', body: form });
