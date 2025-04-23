@@ -147,19 +147,21 @@
 
 <script>
   function addMessageToHistory(content, isUser = false) {
-    const chatHistory = document.getElementById('chatHistory');
-    const messageDiv = document.createElement('div');
-    messageDiv.classList.add('message', isUser ? 'user' : 'bot');
+  const chatHistory = document.getElementById('chatHistory');
+  const messageDiv = document.createElement('div');
+  messageDiv.classList.add('message', isUser ? 'user' : 'bot');
 
-    if (typeof content === 'string' || content instanceof HTMLElement) {
-      messageDiv.appendChild(typeof content === 'string' ? document.createTextNode(content) : content);
-    } else {
-      messageDiv.innerHTML = content;
-    }
-
-    chatHistory.appendChild(messageDiv);
-    chatHistory.scrollTop = chatHistory.scrollHeight;
+  if (isUser) {
+    // Texto puro para o usuário (sem HTML)
+    messageDiv.textContent = content;
+  } else {
+    // Mensagem do bot: renderiza como HTML
+    messageDiv.innerHTML = marked.parse(content);
   }
+
+  chatHistory.appendChild(messageDiv);
+  chatHistory.scrollTop = chatHistory.scrollHeight;
+}
 
   function showLoading(show = true) {
     const loadingIndicator = document.getElementById('loadingIndicator');
@@ -202,8 +204,8 @@
         botResponse = data.response;
       }
 
-      const formatted = marked.parse(botResponse);
-      addMessageToHistory(formatted, false);
+      addMessageToHistory(botResponse, false);
+      
     } catch (error) {
       addMessageToHistory("Erro ao processar sua mensagem", false);
       console.error("Erro:", error);
